@@ -112,15 +112,13 @@ class ImageUploadBehavior extends ModelBehavior {
 
                 // Check any error occur
                 if ($model->data[$model->name][$field]['error'] > 0) {
-                    if (!empty($model->data[$model->name][$field]['delete']) || !empty($model->data[$model->name][$field . '_delete'])) {
-                        // if error == 4 then we are not loading a file, so lets see if we want to delete it
-                        if (!empty($model->data[$model->name][$field]['delete']) || !empty($model->data[$model->name][$field.'_delete'])) {
-                        	$model->data[$model->name][$field] = '';
-                        } else {
-                        	unset($model->data[$model->name][$field]);
-                        }
-                        continue;
+                    // if error == 4 then we are not loading a file, so lets see if we want to delete it
+                    if (!empty($model->data[$model->name][$field]['delete']) || !empty($model->data[$model->name][$field.'_delete'])) {
+                    	$model->data[$model->name][$field] = '';
+                    } else {
+                    	unset($model->data[$model->name][$field]);
                     }
+                    continue;
                 }
 
                 // Lets remove any file which did exist for this model
@@ -160,8 +158,7 @@ class ImageUploadBehavior extends ModelBehavior {
 
                 // Attempt to move uploaded file
                 if (!move_uploaded_file($model->data[$model->name][$field]['tmp_name'], $saveAs)) {
-                    unset($model->data[$model->name][$field]);
-                    continue;
+                    throw new LogicException('There was a problem uploading the image, please ensure the folder path is writable.');
                 }
 
                 // Update model data
