@@ -1,11 +1,17 @@
 # Uploader
 File and Image Uploader for CakePHP
 
-This is still in beta, but more documentation will follow shortly!
+# Installing
 
-The Uploader uses PHPThumb for image resizing.
+1) In terminal / command line go to cd app/Plugin
 
-This plugin should be installed via git, and PHPThumb should be installed as a submodule:
+2) Type:
+   git submodule add https://github.com/MichaelHoughton/cakephp-file-uploader.git Uploader
 
-git submodule init
-git submodule update
+3) Browse to the Plugin
+   cd Uploader
+
+4) The Uploader uses PHPThumb for image resizing.  Download PHPThumb using git submodule
+
+  git submodule init
+  git submodule update
