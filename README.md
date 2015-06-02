@@ -23,24 +23,11 @@ Add the following to your composer.json file
                     "reference": "master"
                 }
             }
-        },
-        {
-            "type": "package",
-            "package": {
-                "name": "phpThumb",
-                "version": "dev-master",
-                "type": "vcs",
-                "source": {
-                    "url": "https://github.com/JamesHeinrich/phpThumb",
-                    "type": "git",
-                    "reference": "master"
-                }
-            }
         }
     ],
     "require": {
         "MichaelHoughton/Uploader": "dev-master",
-        "phpThumb": "dev-master"
+        "james-heinrich/phpthumb": "dev-master"
     }
 ```
 

@@ -1,0 +1,23 @@
+{
+    "name": "MichaelHoughton/Uploader",
+    "description": "File and Image Uploader for CakePHP 2",
+    "type": "library",
+    "license": "MIT",
+	"authors": [
+        {
+            "name": "Michael Houghton",
+            "email": "michael@cakecoded.com",
+            "homepage": "http://www.michael-houghton.com",
+            "role": "Developer"
+        }
+    ],
+    "keywords": ["cakephp", "phpthumb", "thumbnail", "thumb", "GD", "ImageMagick", "image", "magic"],
+    "homepage": "https://github.com/MichaelHoughton/cakephp-file-uploader",
+    "require": {
+        "php": ">=5.3"
+    },
+    "suggest": {
+        "ext-gd": "PHP GD library",
+        "ext-imagick": "PHP ImageMagick"
+    }
+}
