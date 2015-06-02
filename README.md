@@ -3,6 +3,10 @@ File and Image Uploader for CakePHP
 
 # Installing
 
+For the GIT Submodules version, please use the "git" branch.
+
+Use the master branch for the composer version.
+
 As this Plugin uses GIT submodules, the best way to install this Plugin is via GIT.
 
 1) In terminal / command line go to cd app/Plugin
@@ -101,3 +105,5 @@ $this->request->data['Model']['noUpload'] = true;
 This will ignore the behaviour.
 
 The behavior will also automatically delete the image file (and resized files) when you delete that row.  It will first check that that image file name isn't used in other rows in the model, before deleting the file for good!
+
+Finally - you will need to ensure you have the field in your database table, e.g. in your table, you need to have a field called "yourFieldName", otherwise, the behaviour won't work.

@@ -62,7 +62,7 @@ class ImageUploadBehavior extends ModelBehavior {
                 continue;
             }
 
-            if(substr($options['directory'], -1) != '/'){
+            if (substr($options['directory'], -1) != '/'){
                 $options['directory'] = $options['directory'] . DS;
             }
 
@@ -79,7 +79,7 @@ class ImageUploadBehavior extends ModelBehavior {
         $this->__fields = $this->setup($model, $options);
 
         if (count($this->__fields) > 0) {
-            foreach($this->__fields as $field => $options) {
+            foreach ($this->__fields as $field => $options) {
                 // Check for model data whether has been set or not
                 if (!isset($model->data[$model->name][$field])){
                     continue;
