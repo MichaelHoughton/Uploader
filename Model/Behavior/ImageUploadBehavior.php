@@ -8,7 +8,7 @@
  * @license MIT
  */
 App::import('Core', array('Folder', 'File'));
-App::import('Vendor', 'Uploader.phpThumb', array('file' => 'phpThumb' . DS . 'phpthumb.class.php'));
+App::import('Vendor', 'phpThumb', array('file' => 'phpThumb' . DS . 'phpthumb.class.php'));
 
 class ImageUploadBehavior extends ModelBehavior {
     public $options = array(

@@ -7,35 +7,50 @@ For the GIT Submodules version, please use the "git" branch.
 
 Use the master branch for the composer version.
 
-As this Plugin uses GIT submodules, the best way to install this Plugin is via GIT.
-
-1) In terminal / command line go to cd app/Plugin
-
-2) Type:
+Add the following to your composer.json file
 
 ```
-git clone https://github.com/MichaelHoughton/cakephp-file-uploader.git Uploader
+"repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "MichaelHoughton/Uploader",
+                "version": "dev-master",
+                "type": "cakephp-plugin",
+                "source": {
+                    "url": "https://github.com/MichaelHoughton/cakephp-file-uploader.git",
+                    "type": "git",
+                    "reference": "master"
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "phpThumb",
+                "version": "dev-master",
+                "type": "vcs",
+                "source": {
+                    "url": "https://github.com/JamesHeinrich/phpThumb",
+                    "type": "git",
+                    "reference": "master"
+                }
+            }
+        }
+    ],
+    "require": {
+        "MichaelHoughton/Uploader": "dev-master",
+        "phpThumb": "dev-master"
+    }
 ```
 
-Or, if you have an existing GIT repository:
+2) Run
 
 ```
-git submodule add https://github.com/MichaelHoughton/cakephp-file-uploader.git Uploader
+php composer.phar update
 ```
 
-3) Browse to the Plugin
-```
-cd Uploader
-```
-
-4) The Uploader uses PHPThumb for image resizing.  Download PHPThumb using git submodule
-
-```
-git submodule init
-git submodule update
-```
-
-5) Finally, in your app/Config/bootstrap.php file, load the plugin:
+3) In your app/Config/bootstrap.php file, load the plugin:
 
 ```php
 CakePlugin::load('Uploader');
