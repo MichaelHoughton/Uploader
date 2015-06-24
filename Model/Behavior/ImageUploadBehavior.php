@@ -13,7 +13,9 @@ App::import('Vendor', 'phpThumb', array('file' => 'phpThumb' . DS . 'phpthumb.cl
 class ImageUploadBehavior extends ModelBehavior {
     public $options = array(
         'required'		    => false,
+        'root'              => null, // optional, can set this to a different root other than WWW_ROOT
 		'directory'         => 'img/uploads',
+        'prefix'            => null, // optional, if you would like to save the image with a prefix, enter it here
 		'allowed_mime' 	    => array('image/jpeg', 'image/pjpeg', 'image/gif', 'image/png'),
 		'allowed_extension' => array('.jpg', '.jpeg', '.png', '.gif'),
 		'allowed_size'	    => 1048576,
@@ -53,7 +55,7 @@ class ImageUploadBehavior extends ModelBehavior {
 
         $config_temp = array();
 
-        foreach ($config as $field => $options){
+        foreach ($config as $field => $options) {
             // Check if given field exists
             if (!$model->hasField($field)){
                 unset($config[$field]);
@@ -64,6 +66,18 @@ class ImageUploadBehavior extends ModelBehavior {
 
             if (substr($options['directory'], -1) != '/'){
                 $options['directory'] = $options['directory'] . DS;
+            }
+
+            if (empty($options['root'])) {
+                $options['root'] = WWW_ROOT;
+            }
+
+            if (!empty($options['resize'])) {
+                foreach ($options['resize'] as &$resize) {
+                    if (empty($resize['root'])) {
+                        $resize['root'] = $options['root'];
+                    }
+                }
             }
 
             $config_temp[$field] = $options;
@@ -78,103 +92,134 @@ class ImageUploadBehavior extends ModelBehavior {
         // there is a CakePHP issue here so we need to reload this manually
         $this->__fields = $this->setup($model, $options);
 
-        if (count($this->__fields) > 0) {
-            foreach ($this->__fields as $field => $options) {
-                // Check for model data whether has been set or not
-                if (!isset($model->data[$model->name][$field])){
-                    continue;
+        if (count($this->__fields) == 0) {
+            continue;
+        }
+
+        foreach ($this->__fields as $field => $options) {
+            // Check for model data whether has been set or not
+            if (!isset($model->data[$model->name][$field])){
+                continue;
+            }
+
+            // lets see if the ingore upload it set!
+            if (!empty($model->data[$model->name]['noUpload'])){
+                continue;
+            }
+
+            // lets see if we are deleting this image
+            if (!empty($model->data[$model->name][$field]['delete']) || !empty($model->data[$model->name][$field . '_delete'])) {
+                $model->recursive = -1;
+                if (!empty($model->data[$model->name][$field]['delete'])) {
+                   $current = $model->findById($model->data[$model->name][$field]['delete']);
+                } else {
+                    $current = $model->findById($model->data[$model->name][$field.'_delete']);
                 }
 
-                // lets see if the ingore upload it set!
-                if (!empty($model->data[$model->name]['noUpload'])){
-                    continue;
+                if (!empty($current[$model->name][$field])) {
+                    $this->removeImages($current[$model->name][$field], $options);
+                }
+            }
+
+            // Check the data if it's not an array
+            if (isset($model->data) && !is_array($model->data[$model->name][$field])){
+                unset($model->data[$model->name][$field]);
+                continue;
+            }
+
+            // Check any error occur
+            if ($model->data[$model->name][$field]['error'] > 0) {
+                // if error == 4 then we are not loading a file, so lets see if we want to delete it
+                if (!empty($model->data[$model->name][$field]['delete']) || !empty($model->data[$model->name][$field.'_delete'])) {
+                	$model->data[$model->name][$field] = '';
+                } else {
+                	unset($model->data[$model->name][$field]);
+                }
+                continue;
+            }
+
+            // Lets remove any file which did exist for this model
+            if (!empty($model->data[$model->name]['id'])) {
+                $model->recursive = -1;
+                $current = $model->findById($model->data[$model->name]['id'], $field);
+
+                // lets delete the old images
+                if (!empty($current[$model->name][$field])) {
+                    $this->removeImages($current[$model->name][$field], $options);
+                }
+            }
+
+            // Create final save path
+            if (!isset($options['random_filename']) || !$options['random_filename']) {
+                $fileName = $this->stripCharacters($model->data[$model->name][$field]['name']);
+
+                $dir = realpath($options['root'] . DS . $options['directory']);
+
+                if (!$dir) {
+                    throw new LogicException('The directory does not exist!');
                 }
 
-                // lets see if we are deleting this image
-                if (!empty($model->data[$model->name][$field]['delete']) || !empty($model->data[$model->name][$field . '_delete'])) {
-                    $model->recursive = -1;
-                    if (!empty($model->data[$model->name][$field]['delete'])) {
-                       $current = $model->findById($model->data[$model->name][$field]['delete']);
-                    } else {
-                        $current = $model->findById($model->data[$model->name][$field.'_delete']);
-                    }
-
-                    if (!empty($current[$model->name][$field])) {
-                        $this->removeImages($current[$model->name][$field], $options);
-                    }
-                }
-
-                // Check the data if it's not an array
-                if (isset($model->data) && !is_array($model->data[$model->name][$field])){
-                    unset($model->data[$model->name][$field]);
-                    continue;
-                }
-
-                // Check any error occur
-                if ($model->data[$model->name][$field]['error'] > 0) {
-                    // if error == 4 then we are not loading a file, so lets see if we want to delete it
-                    if (!empty($model->data[$model->name][$field]['delete']) || !empty($model->data[$model->name][$field.'_delete'])) {
-                    	$model->data[$model->name][$field] = '';
-                    } else {
-                    	unset($model->data[$model->name][$field]);
-                    }
-                    continue;
-                }
-
+                $saveAs = $dir . DS . $fileName;
+            } else {
                 // Lets remove any file which did exist for this model
                 if (!empty($model->data[$model->name]['id'])) {
-                    $model->recursive = -1;
+					$model->recursive = -1;
                     $current = $model->findById($model->data[$model->name]['id'], $field);
 
                     // lets delete the old images
-                    if (!empty($current[$model->name][$field])) {
+                   	if (!empty($current[$model->name][$field])) {
                         $this->removeImages($current[$model->name][$field], $options);
-                    }
+                   	}
                 }
 
-                // Create final save path
                 if (!isset($options['random_filename']) || !$options['random_filename']) {
-                    $saveAs = realpath($options['directory']) . DS . $model->data[$model->name][$field]['name'];
-                } else {
-                    // Lets remove any file which did exist for this model
-                    if (!empty($model->data[$model->name]['id'])) {
-						$model->recursive = -1;
-                        $current = $model->findById($model->data[$model->name]['id'], $field);
-
-                        // lets delete the old images
-                       	if (!empty($current[$model->name][$field])) {
-                            $this->removeImages($current[$model->name][$field], $options);
-                       	}
-                    }
-
-                    if (!isset($options['random_filename']) || !$options['random_filename']) {
-                    	$saveAs = realpath(WWW_ROOT . $options['directory']) .DS. $model->data[$model->name][$field]['name'];
-                	} else {
-	                    $uniqueFileName = sha1(uniqid(rand(), true));
-	                    $extension = explode('.', $model->data[$model->name][$field]['name']);
-	                    $saveAs    = realpath(WWW_ROOT . $options['directory']) .DS. $uniqueFileName . '.' . $extension[count($extension)-1];
-                    }
+                	$saveAs = realpath($options['root'] . DS  . $options['directory']) .DS. $model->data[$model->name][$field]['name'];
+            	} else {
+                    $uniqueFileName = sha1(uniqid(rand(), true));
+                    $extension = explode('.', $model->data[$model->name][$field]['name']);
+                    $saveAs    = realpath($options['root'] . DS  . $options['directory']) .DS. $uniqueFileName . '.' . $extension[count($extension)-1];
                 }
+            }
 
-                // Attempt to move uploaded file
-                if (!move_uploaded_file($model->data[$model->name][$field]['tmp_name'], $saveAs)) {
-                    throw new LogicException('There was a problem uploading the image, please ensure the folder path is writable.');
-                }
+            // Attempt to move uploaded file
+            if (!move_uploaded_file($model->data[$model->name][$field]['tmp_name'], $saveAs)) {
+                throw new LogicException('There was a problem uploading the image, please ensure the folder path is writable.');
+            }
 
-                // Update model data
-                $model->data[$model->name]['type'] = $model->data[$model->name][$field]['type'];
-                $model->data[$model->name]['size'] = $model->data[$model->name][$field]['size'];
-                $model->data[$model->name][$field] = basename($saveAs);
+            // Update model data
+            $model->data[$model->name]['type'] = $model->data[$model->name][$field]['type'];
+            $model->data[$model->name]['size'] = $model->data[$model->name][$field]['size'];
 
-                if (!empty($options['resize'])) {
-                    foreach ($options['resize'] as $name => $resize) {
-                        $this->generateThumbnail($saveAs, $resize);
-                    }
+            if (empty($options['prefix'])) {
+                $options['prefix'] = '';
+            }
+
+            $model->data[$model->name][$field] = $options['prefix'] . basename($saveAs);
+
+            if (!empty($options['resize'])) {
+                foreach ($options['resize'] as $name => $resize) {
+                    $this->generateThumbnail($saveAs, $resize);
                 }
             }
         }
 
         return true;
+    }
+
+/**
+ * Strips any bad characters from a file name
+ * @param  string $fileName
+ * @return string
+ */
+    public function stripCharacters($fileName = null) {
+        if (!$fileName) {
+            throw new NotFoundException('Invalid File Name');
+        }
+
+        $fileName = str_replace(' ', '-', $fileName);
+
+        $badCharacters = array('(', ')', '{', '}', '[', ']', '/', '\\');
+        return str_replace($badCharacters, '', $fileName);
     }
 
     public function beforeValidate(Model $model, $options = array()) {
@@ -270,13 +315,13 @@ class ImageUploadBehavior extends ModelBehavior {
         // we should only delete this image if it only exists once in this model
         // this code needs to be added here
 
-        $file_with_ext = WWW_ROOT . $options['directory'] . $file;
+        $file_with_ext = $options['root'] . DS . $options['directory'] . $file;
 		if (file_exists($file_with_ext)) {
 			unlink($file_with_ext);
 		}
 
         foreach ($options['resize'] as $name => $resize) {
-            $resizePath = WWW_ROOT . $resize['directory'] . DS . $file;
+            $resizePath = $options['root'] . DS . $resize['directory'] . DS . $file;
             if (file_exists($resizePath)){
                 unlink($resizePath);
             }
@@ -284,7 +329,7 @@ class ImageUploadBehavior extends ModelBehavior {
     }
 
 	public function generateThumbnail($saveAs, $options){
-        $destination = WWW_ROOT . $options['directory'] . DS . basename($saveAs);
+        $destination = $options['root'] . DS . $options['directory'] . DS . basename($saveAs);
 
         $ext = substr(basename($saveAs), strrpos(basename($saveAs), '.') + 1);
         if ($ext == '.jpg' || $ext == '.jpeg') {
