@@ -93,7 +93,7 @@ class ImageUploadBehavior extends ModelBehavior {
         $this->__fields = $this->setup($model, $options);
 
         if (count($this->__fields) == 0) {
-            continue;
+            return true;
         }
 
         foreach ($this->__fields as $field => $options) {
