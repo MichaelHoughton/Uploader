@@ -110,11 +110,7 @@ class ImageUploadBehavior extends ModelBehavior {
             // lets see if we are deleting this image
             if (!empty($model->data[$model->name][$field]['delete']) || !empty($model->data[$model->name][$field . '_delete'])) {
                 $model->recursive = -1;
-                if (!empty($model->data[$model->name][$field]['delete'])) {
-                   $current = $model->findById($model->data[$model->name][$field]['delete']);
-                } else {
-                    $current = $model->findById($model->data[$model->name][$field.'_delete']);
-                }
+                $current = $model->findById($model->id, $field);
 
                 if (!empty($current[$model->name][$field])) {
                     $this->removeImages($current[$model->name][$field], $options);
@@ -139,9 +135,9 @@ class ImageUploadBehavior extends ModelBehavior {
             }
 
             // Lets remove any file which did exist for this model
-            if (!empty($model->data[$model->name]['id'])) {
+            if (!empty($model->id)) {
                 $model->recursive = -1;
-                $current = $model->findById($model->data[$model->name]['id'], $field);
+                $current = $model->findById($model->id, $field);
 
                 // lets delete the old images
                 if (!empty($current[$model->name][$field])) {
@@ -161,17 +157,6 @@ class ImageUploadBehavior extends ModelBehavior {
 
                 $saveAs = $dir . DS . $fileName;
             } else {
-                // Lets remove any file which did exist for this model
-                if (!empty($model->data[$model->name]['id'])) {
-					$model->recursive = -1;
-                    $current = $model->findById($model->data[$model->name]['id'], $field);
-
-                    // lets delete the old images
-                   	if (!empty($current[$model->name][$field])) {
-                        $this->removeImages($current[$model->name][$field], $options);
-                   	}
-                }
-
                 if (!isset($options['random_filename']) || !$options['random_filename']) {
                 	$saveAs = realpath($options['root'] . DS  . $options['directory']) .DS. $model->data[$model->name][$field]['name'];
             	} else {
