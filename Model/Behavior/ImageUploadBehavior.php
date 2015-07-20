@@ -343,7 +343,7 @@ class ImageUploadBehavior extends ModelBehavior {
         $phpThumb->setParameter('f', $format);
 
         if (!empty($options['phpThumb'])) {
-            foreach($options['phpThumb'] as $name => $value){
+            foreach ($options['phpThumb'] as $name => $value){
                 if(!empty($value)){
                     $phpThumb->setParameter($name, $value);
                 }
