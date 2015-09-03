@@ -145,6 +145,17 @@ class ImageUploadBehavior extends ModelBehavior {
                 }
             }
 
+            if (!empty($model->data[$model->name][$field . '_dirSuffix'])) {
+                $options['directory'] .= DS . $model->data[$model->name][$field . '_dirSuffix'];
+            }
+
+            if (!file_exists($options['directory'])) {
+                // if the directory doesn't exist, lets attempt to make it
+
+                App::uses('Folder', 'Utility');
+                new Folder($options['directory'], true, 0777);
+            }
+
             // Create final save path
             if (!isset($options['random_filename']) || !$options['random_filename']) {
                 $fileName = $this->stripCharacters($model->data[$model->name][$field]['name']);
@@ -158,11 +169,11 @@ class ImageUploadBehavior extends ModelBehavior {
                 $saveAs = $dir . DS . $fileName;
             } else {
                 if (!isset($options['random_filename']) || !$options['random_filename']) {
-                	$saveAs = realpath($options['root'] . DS  . $options['directory']) .DS. $model->data[$model->name][$field]['name'];
+                	$saveAs = realpath($options['root'] . DS  . $options['directory']) . DS . $model->data[$model->name][$field]['name'];
             	} else {
                     $uniqueFileName = sha1(uniqid(rand(), true));
                     $extension = explode('.', $model->data[$model->name][$field]['name']);
-                    $saveAs    = realpath($options['root'] . DS  . $options['directory']) .DS. $uniqueFileName . '.' . $extension[count($extension)-1];
+                    $saveAs    = realpath($options['root'] . DS  . $options['directory']) . DS . $uniqueFileName . '.' . $extension[count($extension)-1];
                 }
             }
 
@@ -297,9 +308,6 @@ class ImageUploadBehavior extends ModelBehavior {
     }
 
     public function removeImages($file, $options) {
-        // we should only delete this image if it only exists once in this model
-        // this code needs to be added here
-
         $file_with_ext = $options['root'] . DS . $options['directory'] . $file;
 		if (file_exists($file_with_ext)) {
 			unlink($file_with_ext);
