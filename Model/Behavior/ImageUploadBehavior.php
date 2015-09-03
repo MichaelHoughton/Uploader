@@ -149,11 +149,11 @@ class ImageUploadBehavior extends ModelBehavior {
                 $options['directory'] .= DS . $model->data[$model->name][$field . '_dirSuffix'];
             }
 
-            if (!file_exists($options['directory'])) {
+            if (!file_exists($options['root'] . DS  . $options['directory'])) {
                 // if the directory doesn't exist, lets attempt to make it
 
                 App::uses('Folder', 'Utility');
-                new Folder($options['directory'], true, 0777);
+                new Folder($options['root'] . DS  . $options['directory'], true, 0777);
             }
 
             // Create final save path
