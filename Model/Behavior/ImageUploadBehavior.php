@@ -194,6 +194,10 @@ class ImageUploadBehavior extends ModelBehavior {
 
             if (!empty($options['resize'])) {
                 foreach ($options['resize'] as $name => $resize) {
+                    if (!empty($model->data[$model->name][$field . '_dirSuffix'])) {
+                        $resize['directory'] .= DS . $model->data[$model->name][$field . '_dirSuffix'];
+                    }
+
                     $this->generateThumbnail($saveAs, $resize);
                 }
             }
@@ -322,6 +326,12 @@ class ImageUploadBehavior extends ModelBehavior {
     }
 
 	public function generateThumbnail($saveAs, $options){
+        $saveAs = realpath($saveAs);
+
+        if (!$saveAs) {
+            throw new NotFoundException('The original image did not upload correctly.');
+        }
+
         $destination = $options['root'] . DS . $options['directory'] . DS . basename($saveAs);
 
         $ext = substr(basename($saveAs), strrpos(basename($saveAs), '.') + 1);
@@ -361,12 +371,12 @@ class ImageUploadBehavior extends ModelBehavior {
         if ($phpThumb->generateThumbnail()) {
 			if ($phpThumb->RenderToFile($destination)) {
                 chmod($destination, 0644);
-				return true;
+                return true;
 			} else {
                 return false;
             }
 		} else {
-			return false;
+            return false;
 		}
 	}
 
