@@ -103,7 +103,7 @@ class ImageUploadBehavior extends ModelBehavior {
             }
 
             // lets see if the ingore upload it set!
-            if (!empty($model->data[$model->name]['noUpload'])){
+            if (!empty($model->data[$model->name]['noUpload']) || !empty($model->data[$model->name]['noUpload_' . $field])) {
                 continue;
             }
 
@@ -350,12 +350,16 @@ class ImageUploadBehavior extends ModelBehavior {
         $phpThumb->setCacheDirectory(CACHE);
 
         $size = @getimagesize($saveAs);
-        if ($size[0] > $options['width'] || !empty($options['phpThumb']['far']) || empty($size)) {
-            $phpThumb->setParameter('w', $options['width']);
+        if (!empty($options['width'])) {
+            if ($size[0] > $options['width'] || !empty($options['phpThumb']['far']) || empty($size)) {
+                $phpThumb->setParameter('w', $options['width']);
+            }
         }
 
-        if ($size[1] > $options['height'] || !empty($options['phpThumb']['far']) || empty($size)) {
-            $phpThumb->setParameter('h', $options['height']);
+        if (!empty($options['height'])) {
+            if ($size[1] > $options['height'] || !empty($options['phpThumb']['far']) || empty($size)) {
+                $phpThumb->setParameter('h', $options['height']);
+            }
         }
 
         $phpThumb->setParameter('f', $format);
